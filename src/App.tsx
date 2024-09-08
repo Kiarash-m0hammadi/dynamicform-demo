@@ -57,6 +57,8 @@ const createValidationSchema = (infoArray) => {
 };
 
 const App = () => {
+  const infoArray = DummyData.info;
+
   // Create initial values from the JSON and convert checkboxes to boolean values
   const initialValues = infoArray.reduce((acc, field) => {
     if (field.type === "C") {
@@ -90,18 +92,35 @@ const App = () => {
     }
   };
 
+  const handleFileUpload = (file) => {
+    // You can handle the file here (e.g., save it to a server or display it)
+    console.log("Uploaded file:", file);
+    return file.name; // For simplicity, we return the file name as the value
+  };
+
   const handleSubmit = (values) => {
-    // Convert boolean checkbox values back to Y/N
+    // Convert boolean checkbox values back to Y/N and handle the file input
     const convertedValues = Object.keys(values).reduce((acc, key) => {
       const field = infoArray.find((f) => f.symbol === key);
       if (field && field.type === "C") {
         acc[key] = values[key] ? "Y" : "N"; // Convert true/false back to Y/N
+      } else if (field && field.type === "U") {
+        acc[key] = handleFileUpload(values[key]); // Save the file in the same directory
       } else {
         acc[key] = values[key];
       }
       return acc;
     }, {});
-    console.log("Form values:", convertedValues);
+
+    // Save JSON file
+    const jsonData = JSON.stringify(convertedValues, null, 2);
+    const blob = new Blob([jsonData], { type: "application/json" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "form-data.json";
+    link.click();
+
+    console.log("Form values saved as JSON:", convertedValues);
   };
 
   return (
@@ -112,12 +131,13 @@ const App = () => {
         validationSchema={validationSchema}
         onSubmit={handleSubmit}
       >
-        {({ values, errors, touched }) => (
+        {({ values, errors, touched, setFieldValue }) => (
           <Form>
             {infoArray.map((field, index) => (
               <div key={index}>
                 <label>{field.name}</label>
                 {getInputField(field)}
+                {/* Display validation errors */}
                 {errors[field.symbol] && touched[field.symbol] && (
                   <div style={{ color: "red" }}>{errors[field.symbol]}</div>
                 )}
