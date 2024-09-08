@@ -6,19 +6,6 @@ import "./App.css";
 const infoArray = DummyData.info;
 
 // Helper function to extract 'count' from the attribute string
-interface FieldInfo {
-  symbol: string;
-  name: string;
-  type: string;
-  attribute: string;
-  isRequired: string;
-  defaultValue: string;
-}
-
-interface ConvertedValues {
-  [key: string]: string | boolean;
-}
-
 const extractCount = (attribute: string): number | null => {
   if (!attribute) return null;
   const countMatch = attribute.match(/count:(\d+)/);
@@ -26,11 +13,12 @@ const extractCount = (attribute: string): number | null => {
 };
 
 // Create the Yup validation schema based on the infoArray
-const createValidationSchema = (infoArray: FieldInfo[]) => {
-  const shape: any = {};
+const createValidationSchema = (infoArray: Array<any>) => {
+  const shape = {};
 
   infoArray.forEach((field) => {
-    let validationRule: any = Yup.mixed();
+    let validationRule =
+      field.type === "T" || field.type === "A" ? Yup.string() : Yup.mixed();
 
     if (field.isRequired === "Y") {
       validationRule = validationRule.required(`${field.name} is required`);
@@ -70,10 +58,10 @@ const createValidationSchema = (infoArray: FieldInfo[]) => {
 };
 
 const App = () => {
-  const infoArray: FieldInfo[] = DummyData.info;
+  const infoArray = DummyData.info;
 
   // Create initial values from the JSON and convert checkboxes to boolean values
-  const initialValues: ConvertedValues = infoArray.reduce((acc, field) => {
+  const initialValues = infoArray.reduce((acc, field) => {
     if (field.type === "C") {
       acc[field.symbol] = field.defaultValue === "Y" ? true : false; // Convert Y/N to boolean
     } else {
@@ -86,7 +74,7 @@ const App = () => {
   const validationSchema = createValidationSchema(infoArray);
 
   // Helper function to determine input field type
-  const getInputField = (field: FieldInfo) => {
+  const getInputField = (field) => {
     switch (field.type) {
       case "C":
         return <Field type="checkbox" name={field.symbol} />;
@@ -105,28 +93,25 @@ const App = () => {
     }
   };
 
-  const handleFileUpload = (file: File) => {
+  const handleFileUpload = (file) => {
     // You can handle the file here (e.g., save it to a server or display it)
     console.log("Uploaded file:", file);
     return file.name; // For simplicity, we return the file name as the value
   };
 
-  const handleSubmit = (values: ConvertedValues) => {
+  const handleSubmit = (values) => {
     // Convert boolean checkbox values back to Y/N and handle the file input
-    const convertedValues: ConvertedValues = Object.keys(values).reduce(
-      (acc, key) => {
-        const field = infoArray.find((f) => f.symbol === key);
-        if (field && field.type === "C") {
-          acc[key] = values[key] ? "Y" : "N"; // Convert true/false back to Y/N
-        } else if (field && field.type === "U") {
-          acc[key] = handleFileUpload(values[key]); // Save the file in the same directory
-        } else {
-          acc[key] = values[key];
-        }
-        return acc;
-      },
-      {}
-    );
+    const convertedValues = Object.keys(values).reduce((acc, key) => {
+      const field = infoArray.find((f) => f.symbol === key);
+      if (field && field.type === "C") {
+        acc[key] = values[key] ? "Y" : "N"; // Convert true/false back to Y/N
+      } else if (field && field.type === "U") {
+        acc[key] = handleFileUpload(values[key]); // Save the file in the same directory
+      } else {
+        acc[key] = values[key];
+      }
+      return acc;
+    }, {});
 
     // Save JSON file
     const jsonData = JSON.stringify(convertedValues, null, 2);
@@ -147,7 +132,7 @@ const App = () => {
         validationSchema={validationSchema}
         onSubmit={handleSubmit}
       >
-        {({ values, errors, touched, setFieldValue }) => (
+        {({ errors, touched }) => (
           <Form>
             {infoArray.map((field, index) => (
               <div key={index}>
