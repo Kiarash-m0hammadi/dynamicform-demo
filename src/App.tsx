@@ -1,37 +1,57 @@
+import DummyData from "./dummy.json";
+import { Formik, Form, Field } from "formik";
+import "./App.css";
+
+const infoArray = DummyData.info;
+
 const App = () => {
-  // Helper function to determine input type
+  // Create initial values from the JSON
+  const initialValues = infoArray.reduce((acc, field) => {
+    acc[field.symbol] = field.defaultValue || ""; // Use defaultValue or empty string
+    return acc;
+  }, {});
+
+  // Helper function to determine input field type
   const getInputField = (field) => {
     switch (field.type) {
       case "C":
-        return <input type="checkbox" name={field.symbol} />;
+        return <Field type="checkbox" name={field.symbol} />;
       case "T":
-        return <input type="text" name={field.symbol} />;
+        return <Field type="text" name={field.symbol} />;
       case "N":
-        return <input type="number" name={field.symbol} />;
+        return <Field type="number" name={field.symbol} />;
       case "D":
-        return <input type="date" name={field.symbol} />;
+        return <Field type="date" name={field.symbol} />;
       case "U":
-        return <input type="file" name={field.symbol} />;
+        return <Field type="file" name={field.symbol} />;
       case "A":
-        return <textarea name={field.symbol} />;
+        return <Field as="textarea" name={field.symbol} />;
       default:
-        return <input type="text" name={field.symbol} />; // Default to text if unknown type
+        return <Field type="text" name={field.symbol} />;
     }
+  };
+
+  const handleSubmit = (values) => {
+    console.log("Form values:", values);
   };
 
   return (
     <div>
       <h1>Dynamic Form</h1>
-      <form>
-        {infoArray.map((field, index) => (
-          <div key={index}>
-            {/* Render label */}
-            <label>{field.name}</label>
-            {/* Render input field based on the type */}
-            {getInputField(field)}
-          </div>
-        ))}
-      </form>
+      {/* Formik wrapper */}
+      <Formik initialValues={initialValues} onSubmit={handleSubmit}>
+        {({ values }) => (
+          <Form>
+            {infoArray.map((field, index) => (
+              <div key={index}>
+                <label>{field.name}</label>
+                {getInputField(field)}
+              </div>
+            ))}
+            <button type="submit">Submit</button>
+          </Form>
+        )}
+      </Formik>
     </div>
   );
 };
