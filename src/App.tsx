@@ -57,9 +57,13 @@ const createValidationSchema = (infoArray) => {
 };
 
 const App = () => {
-  // Create initial values from the JSON
+  // Create initial values from the JSON and convert checkboxes to boolean values
   const initialValues = infoArray.reduce((acc, field) => {
-    acc[field.symbol] = field.defaultValue || "";
+    if (field.type === "C") {
+      acc[field.symbol] = field.defaultValue === "Y" ? true : false; // Convert Y/N to boolean
+    } else {
+      acc[field.symbol] = field.defaultValue || "";
+    }
     return acc;
   }, {});
 
@@ -87,7 +91,17 @@ const App = () => {
   };
 
   const handleSubmit = (values) => {
-    console.log("Form values:", values);
+    // Convert boolean checkbox values back to Y/N
+    const convertedValues = Object.keys(values).reduce((acc, key) => {
+      const field = infoArray.find((f) => f.symbol === key);
+      if (field && field.type === "C") {
+        acc[key] = values[key] ? "Y" : "N"; // Convert true/false back to Y/N
+      } else {
+        acc[key] = values[key];
+      }
+      return acc;
+    }, {});
+    console.log("Form values:", convertedValues);
   };
 
   return (
